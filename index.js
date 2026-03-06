@@ -5,10 +5,21 @@ const qrcode = require('qrcode-terminal')
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_lios')
     
-    const sock = makeWASocket({
+        const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true
+        printQRInTerminal: false,
+        browser: ["Ubuntu", "Chrome", "20.0.04"]
     })
+
+    if (!sock.authState.creds.registered) {
+        // मुकेश भाई, यहाँ अपना नंबर लिखें
+        const phoneNumber = '919001749912' 
+        setTimeout(async () => {
+            const code = await sock.requestPairingCode(phoneNumber)
+            console.log(`\nमुकेश भाई, आपका व्हाट्सएप पेयरिंग कोड है: ${code}\n`)
+        }, 3000)
+    }
+
 
     sock.ev.on('creds.update', saveCreds)
 

@@ -1,12 +1,13 @@
 {
   "name": "lios-bot",
   "version": "1.0.0",
+  "description": "Mukesh Gaming Bot",
   "main": "index.js",
   "dependencies": {
     "@whiskeysockets/baileys": "latest",
     "pino": "latest",
-    "qrcode-terminal": "latest",
-    "@hapi/boom": "latest"
+    "@hapi/boom": "latest",
+    "express": "latest"
   },
   "scripts": {
     "start": "node index.js"

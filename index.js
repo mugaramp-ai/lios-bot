@@ -1,56 +1,47 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys')
+const { default: makeWASocket, useMultiFileAuthState, delay, DisconnectReason } = require('@whiskeysockets/baileys')
 const { Boom } = require('@hapi/boom')
-const qrcode = require('qrcode-terminal')
+const pino = require('pino')
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_lios')
     
-        const sock = makeWASocket({
+    const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
         browser: ["Ubuntu", "Chrome", "20.0.04"]
     })
 
     if (!sock.authState.creds.registered) {
-        // मुकेश भाई, यहाँ अपना नंबर लिखें
-        const phoneNumber = '919001749912' 
-        setTimeout(async () => {
-            const code = await sock.requestPairingCode(phoneNumber)
-            console.log(`\nमुकेश भाई, आपका व्हाट्सएप पेयरिंग कोड है: ${code}\n`)
-        }, 3000)
+        // मुकेश भाई, यहाँ अपना नंबर 91 के साथ चेक करें
+        const phoneNumber = '919799282618' 
+        await delay(5000)
+        const code = await sock.requestPairingCode(phoneNumber)
+        console.log(`\n\n************************************`)
+        console.log(`मुकेश भाई, आपका व्हाट्सएप पेयरिंग कोड है: ${code}`)
+        console.log(`************************************\n\n`)
     }
-
 
     sock.ev.on('creds.update', saveCreds)
 
     sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update
-        if(qr) {
-            qrcode.generate(qr, { small: true })
-            console.log('मुकेश भाई, व्हाट्सएप से इस QR कोड को स्कैन करें!')
-        }
+        const { connection, lastDisconnect } = update
         if(connection === 'close') {
             const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut
             if(shouldReconnect) startBot()
         } else if(connection === 'open') {
-            console.log('बॉट ऑनलाइन है! मुकेश गेमिंग हब तैयार है।')
+            console.log('मुकेश भाई, बॉट अब ऑनलाइन है! गेमिंग हब तैयार है।')
         }
     })
 
-    // मुकेश भाई, यहाँ बटन से आने वाले मैसेज हैंडल होंगे
     sock.ev.on('messages.upsert', async m => {
         const msg = m.messages[0]
         if (!msg.message || msg.key.fromMe) return
-        
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text
         const from = msg.key.remoteJid
-
         if (text === '.greencard') {
             await sock.sendMessage(from, { text: '✅ Green Card टाइमर शुरू! (10 Min)' })
-        } else if (text === '.tank') {
-            await sock.sendMessage(from, { text: '🚀 TANK बॉस का टाइमर शुरू! (6 HR)' })
         }
-        // आप यहाँ और भी कमांड्स जोड़ सकते हैं
     })
 }
 

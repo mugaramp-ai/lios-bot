@@ -1,10 +1,16 @@
 const { default: makeWASocket, useMultiFileAuthState, delay, DisconnectReason } = require('@whiskeysockets/baileys')
 const { Boom } = require('@hapi/boom')
 const pino = require('pino')
+const express = require('express')
+const app = express()
+const port = process.env.PORT || 3000
+
+// Render को जगाए रखने के लिए छोटा सर्वर
+app.get('/', (req, res) => res.send('बॉट चालू है, मुकेश भाई!'))
+app.listen(port, () => console.log(`Server running on port ${port}`))
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_lios')
-    
     const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
@@ -13,34 +19,22 @@ async function startBot() {
     })
 
     if (!sock.authState.creds.registered) {
-        // मुकेश भाई, यहाँ अपना नंबर 91 के साथ चेक करें
         const phoneNumber = '919799282618' 
-        await delay(5000)
+        await delay(8000) // थोड़ा इंतज़ार ताकि सर्वर सेट हो जाए
         const code = await sock.requestPairingCode(phoneNumber)
         console.log(`\n\n************************************`)
-        console.log(`मुकेश भाई, आपका व्हाट्सएप पेयरिंग कोड है: ${code}`)
+        console.log(`मुकेश भाई, कोड है: ${code}`)
         console.log(`************************************\n\n`)
     }
 
     sock.ev.on('creds.update', saveCreds)
-
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update
         if(connection === 'close') {
             const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut
             if(shouldReconnect) startBot()
         } else if(connection === 'open') {
-            console.log('मुकेश भाई, बॉट अब ऑनलाइन है! गेमिंग हब तैयार है।')
-        }
-    })
-
-    sock.ev.on('messages.upsert', async m => {
-        const msg = m.messages[0]
-        if (!msg.message || msg.key.fromMe) return
-        const text = msg.message.conversation || msg.message.extendedTextMessage?.text
-        const from = msg.key.remoteJid
-        if (text === '.greencard') {
-            await sock.sendMessage(from, { text: '✅ Green Card टाइमर शुरू! (10 Min)' })
+            console.log('बॉट ऑनलाइन हो गया है!')
         }
     })
 }

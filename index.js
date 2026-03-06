@@ -19,7 +19,7 @@ async function startBot() {
     })
 
     if (!sock.authState.creds.registered) {
-        const phoneNumber = '919799282618' 
+        const phoneNumber = '919001749912' 
         await delay(8000) // थोड़ा इंतज़ार ताकि सर्वर सेट हो जाए
         const code = await sock.requestPairingCode(phoneNumber)
         console.log(`\n\n************************************`)

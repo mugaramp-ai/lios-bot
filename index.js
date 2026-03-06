@@ -3,11 +3,10 @@ const { Boom } = require('@hapi/boom')
 const pino = require('pino')
 const express = require('express')
 const app = express()
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 10000
 
-// Render को जगाए रखने के लिए छोटा सर्वर
-app.get('/', (req, res) => res.send('बॉट चालू है, मुकेश भाई!'))
-app.listen(port, () => console.log(`Server running on port ${port}`))
+app.get('/', (req, res) => res.send('मुकेश भाई, आपका बॉट ज़िंदा है!'))
+app.listen(port)
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_lios')
@@ -19,12 +18,18 @@ async function startBot() {
     })
 
     if (!sock.authState.creds.registered) {
-        const phoneNumber = '919001749912' 
-        await delay(8000) // थोड़ा इंतज़ार ताकि सर्वर सेट हो जाए
-        const code = await sock.requestPairingCode(phoneNumber)
-        console.log(`\n\n************************************`)
-        console.log(`मुकेश भाई, कोड है: ${code}`)
-        console.log(`************************************\n\n`)
+        const phoneNumber = '+919001749912' // मुकेश भाई, आपका नंबर सेट है
+        console.log("कनेक्शन बन रहा है, 20 सेकंड रुकिए...")
+        await delay(20000) // यहाँ हमने इंतज़ार बढ़ा दिया है ताकि एरर न आए
+        try {
+            const code = await sock.requestPairingCode(phoneNumber)
+            console.log(`\n\n************************************`)
+            console.log(`मुकेश भाई, कोड मिल गया: ${code}`)
+            console.log(`************************************\n\n`)
+        } catch (err) {
+            console.log("कोड मिलने में देरी हो रही है, रिस्टार्ट हो रहा है...")
+            startBot()
+        }
     }
 
     sock.ev.on('creds.update', saveCreds)
@@ -34,7 +39,7 @@ async function startBot() {
             const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut
             if(shouldReconnect) startBot()
         } else if(connection === 'open') {
-            console.log('बॉट ऑनलाइन हो गया है!')
+            console.log('बॉट ऑनलाइन है! अब आराम कीजिये।')
         }
     })
 }
